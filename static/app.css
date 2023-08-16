@@ -1,0 +1,18 @@
+.profile-pic{
+    height: 200px;
+    width: 200px;
+}
+
+.footer-fix{
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+}
+
+.no-underline {
+    text-decoration: none;
+}
+
+.content-footer-push{
+    margin-bottom: 100px;
+}
