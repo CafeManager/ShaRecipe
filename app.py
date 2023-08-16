@@ -1,6 +1,5 @@
 from flask import Flask, render_template
 from flask_debugtoolbar import DebugToolbarExtension
-# from models import db, connect_db, User
 from flask_sqlalchemy import SQLAlchemy
 from form import AddUserForm
 
