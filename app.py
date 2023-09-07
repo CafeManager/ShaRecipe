@@ -15,7 +15,7 @@ app.config["SECRET_KEY"] = "this-is-secr3t"
 app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql:///sharecipe"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SQLALCHEMY_ECHO"] = True
-
+app.config['DEBUG'] = True
 API_KEY = "fc0a5c0a6ee744afacee96a81cf8664e"
 
 connect_db(app)
@@ -127,7 +127,7 @@ def fetch_results():
     )
 
 
-@app.route("/recipes/<int:id>/create")
+@app.route("/recipes/<int:id>/create", methods=['GET', 'POST'])
 def get_recipe_template(id):
     res = requests.get(
         f"https://api.spoonacular.com/recipes/{id}/information?apiKey={API_KEY}"
@@ -137,7 +137,7 @@ def get_recipe_template(id):
 
     ingredient_data = []
     steps_data = []
-    print(json)
+    
 
     for ingredient in json.get('extendedIngredients'):
         ingredient_form = IngredientEntryForm()
@@ -156,32 +156,50 @@ def get_recipe_template(id):
 
     if form.validate_on_submit():
         name = form.name.data
-        user_id = 1
+        user_id = g.user.id
         created_at = datetime.datetime.now()
-        created_by = "1"
-        total_time = form.data.total_time
-        parent_recipe_id = form.data.parent_recipe_id
-        total_servings = form.data.total_servings
-        api_id = form.data.api_id
+        created_by = g.user.id
+        total_time = form.total_time.data
+        parent_recipe_id = 0
+        total_servings = form.total_servings.data
+        api_id = id
 
-        ingredient_json = form.data.ingredient_json
-        step_json = form.data.ingredient_json
+        ingredient_json = {'ingredients':[]}
+        step_json = {'steps':[]}
         
-        ingredients = form.data.ingredients
-        steps = form.data.steps
-        user_id = form.data.user_id
+
+        for ingredient in form.ingredients:
+            ingredient_json['ingredients'].append({
+                'amount':ingredient.data['amount'],
+                'unit':ingredient.data['unit'],
+                'name':ingredient.data['name']
+            })
+
+        for step in form.steps:
+            step_json['steps'].append({
+                'step': step.step.data
+            })
 
 
-        recipe = Recipe(name=name, user_id=user_id, 
+
+        recipe = Recipe(name=name, 
                         created_at=created_at, created_by=created_by, 
                         total_time=total_time, total_servings=total_servings, 
                         api_id=api_id, parent_recipe_id=parent_recipe_id)
         
-        ingredient = Ingredient(json=ingredient_json, recipe_id=recipe.id)
+        ingredient_list = Ingredient(json=ingredient_json, recipe_id=recipe.id)
         
-        step = Step(json=step_json, recipe_id=recipe.id)
+        step_list = Step(json=step_json, recipe_id=recipe.id)
 
-        
+        recipe.ingredients.append(ingredient_list)
+        recipe.steps.append(step_list)
+        db.session.add(recipe)
         db.session.commit()
+    else:
+        print(form.errors)
+        
+        
         
     return render_template("/recipe/create.html", res=json, form=form)
+
+    

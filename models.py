@@ -82,8 +82,6 @@ class Recipe(db.Model):
 
     name = db.Column(db.Text, nullable=False)
 
-    user_id = db.Column(db.Text, nullable=False)
-
     created_at = db.Column(db.Time, nullable=False, default=datetime.now())
 
     created_by = db.Column(db.Text, nullable=False)
@@ -94,9 +92,11 @@ class Recipe(db.Model):
 
     api_id = db.Column(db.Integer, nullable=False)
 
-    parent_recipe_id = db.Column(db.Integer, nullable=False)
+    parent_recipe_id = db.Column(db.Integer)
 
+    ingredients = db.relationship('Ingredient')
 
+    steps = db.relationship('Step')
 
 class Ingredient(db.Model):
     "Ingredient."
@@ -111,9 +111,9 @@ class Ingredient(db.Model):
 
     json = db.Column(JSON, nullable=False)
 
-    amount = db.Column(db.Integer, nullable=False)
-
-    recipe_id = db.Column(db.Integer, nullable=False)
+    recipe_id = db.Column(db.Integer,  db.ForeignKey(
+                        'recipes.id'), primary_key = True, 
+                        nullable=False)
 
 
 class Step(db.Model):
@@ -129,5 +129,6 @@ class Step(db.Model):
 
     json = db.Column(JSON, nullable=False)
 
-    recipe_id = db.Column(db.Integer, nullable=False)
+    recipe_id = db.Column(db.Integer,  db.ForeignKey(
+                        'recipes.id'), primary_key = True, nullable=False)
 

@@ -37,6 +37,7 @@
     <ul>
 
         {% for ingredient in form.ingredients%}
+            {{ingredient.form.hidden_tag()}}
             <br>
             {{ingredient.form.amount.label}} {{ingredient.form.amount}}
             <br>
@@ -49,14 +50,10 @@
     </ul>
     
     {% for step in form.steps%}
+        {{step.form.hidden_tag()}}
         {{step.form.step.label}} {{step.form.step}}
         <br>
     {% endfor%}
-    {% for step in res.analyzedInstructions[0].steps%}
-    <p> {{step.step}} </p>
-    <input type="text" placeholder="Add new step">
-    {% endfor %}
-    <br>
     <button class="btn btn-primary"> Success</button>
 </form>
 

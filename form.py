@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, TextAreaField, FloatField, FieldList, FormField, IntegerField
-from wtforms.validators import DataRequired, Email, Length
+from wtforms.validators import DataRequired, Email, Length, Optional
 
 
 class UserAddForm(FlaskForm):
@@ -30,8 +30,8 @@ class ProfileForm(FlaskForm):
     password = PasswordField(validators=[DataRequired()])
 
 class IngredientEntryForm(FlaskForm):
-    amount = StringField("Amount")
-    unit = FloatField("Unit")
+    amount = FloatField("Amount")
+    unit = StringField("Unit", validators=[Optional()])
     name = StringField("Name")
 
 class StepEntryForm(FlaskForm):
