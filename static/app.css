@@ -11,3 +11,11 @@
 .content-footer-push{
     margin-bottom: 100px;
 }
+
+.card-text-overflow{
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+}
+

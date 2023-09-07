@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block title %}
+<title> Create a recipe </title>
+{% endblock %}
+
+{% block content %}
+
+<h1> Customize your recipe </h1>
+
+<form id="pet-add-form" method="POST">
+    {{ form.hidden_tag() }}
+
+
+        {{form.name()}}
+
+    <div class="card" style="width: 70%; display:inline-block; margin:1rem">
+        <img class="card-img-top" height="130rem" src="{{res.image}}" alt="Card image cap">
+        <div class="card-body">
+
+            <h5 class="card-title">{{res.title | safe}}</h5>
+            
+            <input type="text" placeholder="Edit a title">
+            <h5 class="card-title">{{res.readyInMinutes | safe}} minutes</h5>
+            <input type="text" placeholder="Edit recipe time">
+            <h5 class="card-title">{{res.servings | safe}} servings </h5>
+            <input type="text" placeholder="Edit serving amount">
+            <p class="card-text">{{res.summary | safe}}</p>
+            <input type="text" placeholder="Edit summary">
+        </div>
+    </div>
+
+
+
+    <ul>
+        {%for ingredient in res.extendedIngredients %}
+        <li> {{ ingredient.amount }} {{ ingredient.unit }} {{ ingredient.name }} </li>
+        
+        <span> Amount </span> <input type="text" placeholder="{{ingredient.amount}}">
+        <span> Unit </span> <input type="text" placeholder="{{ingredient.unit}}">
+        <span> Name </span> <input type="text" placeholder="{{ingredient.name}}">
+        {%endfor%}
+
+        {% for field in form.ingredients %}
+                
+        {% endfor %}
+    </ul>
+
+    {% for step in res.analyzedInstructions[0].steps%}
+    <p> {{step.step}} </p>
+    <input type="text" placeholder="Add new step">
+    {% endfor %}
+    <br>
+    <button class="btn btn-primary"> Success</button>
+</form>
+
+
+{% endblock %}

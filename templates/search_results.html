@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    <title> Search Page </title>
+{% endblock %}
+
+{% block content %}
+<h1> Select a template to build your recipe off of. </h1>
+<form class="d-flex" action="/fetchresults" id="recipe-search">
+    <input class="form-control me-2" type="search" name="q" placeholder="Search for a recipe" aria-label="Search">
+    <button class="btn btn-outline-success" type="submit">Search</button>
+</form>
+
+    {% for recipe in data.get('recipeData') %}
+        
+        <div class="card" style="width: 30%; display:inline-block; margin:1rem">
+            <img class="card-img-top"  height="130rem" src="{{recipe.get('image')}}" alt="Card image cap">
+            <div class="card-body">
+            <h5 class="card-title">{{recipe.get('title')}}</h5>
+            {% for recipeInfo in data.get('extraRecipeDataById') %}
+                {%if recipeInfo.get("id") == recipe.get("id")%}
+                <p class="card-text">{{recipeInfo.get("summary") | safe | truncate(200)}}</p>
+                {%endif%}
+            
+            {% endfor %}
+            <a href="/recipes/{{recipe.get('id')}}/create" class="btn btn-primary">Start</a>
+            </div>
+        </div>
+    {% endfor %}
+{% endblock %}
+

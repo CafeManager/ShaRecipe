@@ -5,6 +5,24 @@
 {% endblock %}
 
 {% block content %}
-     
-    <h1> Starter code </h1>
+
+<h1> Select a template to build your recipe off of. </h1>
+    <form class="d-flex" action="/fetchresults" id="recipe-search">
+        <input class="form-control me-2" type="search" name="q" placeholder="Search for a recipe" aria-label="Search">
+        <button class="btn btn-outline-success" type="submit">Search</button>
+    </form>
+{% for recipe in res %}
+    
+    <div class="card" style="width: 30%; display:inline-block; margin:1rem">
+        <img class="card-img-top"  height="130rem" src="{{recipe.img}}" alt="Card image cap">
+        <div class="card-body">
+        <h5 class="card-title">{{recipe.title | safe}}</h5>
+        <p class="card-text">{{recipe.summary[0] | safe | truncate(200)}}</p>
+        <a href="/recipes/{{recipe.id}}/create" class="btn btn-primary">Start</a>
+        </div>
+    </div>
+
+
+{% endfor %}
+
 {% endblock %}

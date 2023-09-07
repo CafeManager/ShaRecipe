@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    <title> home page </title>
+{% endblock %}
+
+{% block content %}
+
+<h1> Select a template to build your recipe off of. </h1>
+
+<div class="card" style="width: 18rem;">
+    <img src="{{recipe.image}}" class="card-img-top">
+    <div class="card-body">
+      <p class="card-text">{{recipe.summary | safe}}</p>
+    </div>
+  </div>
+
+{% for step in steps %}
+
+{% endfor %}
+
+{% endblock %}
