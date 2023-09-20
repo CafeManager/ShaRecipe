@@ -15,9 +15,9 @@ CURR_USER_KEY = "curr_user"
 
 def create_app():
     app = Flask(__name__)
-    
-    if os.environ.get("DATABASE_URL") is not None:
-        app.config["SQLALCHEMY_DATABASE_URI"] = os.environ["DATABASE_URL"]
+    print(os.environ)
+    if os.getenv("DATABASE_URL", default=None) is not None:
+        app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
     else:
         app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql:///sharecipe"
         app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
