@@ -43,11 +43,11 @@
                     {{ingredient.get("content")}} </span> </p>
             {%elif ingredient.get("type") == "changed" %}
 
-            <p class="history-text-changed"> <span>ingredient #{{ingredient.get("location")}}</span>
+            <p class="history-text-changed"> <span>Ingredient #{{ingredient.get("location")}}</span>
                 <span>Before:</span><span> {{ingredient.get("content").get("next_ingredient").get("amount")}}
                     {{ingredient.get("content").get("next_ingredient").get("unit")}}
                     {{ingredient.get("content").get("next_ingredient").get("name")}} </span> </p>
-            <p class="history-text-changed"> <span>ingredient #{{ingredient.get("location")}}</span> <span>After:</span><span>
+            <p class="history-text-changed"> <span>Ingredient #{{ingredient.get("location")}}</span> <span>After:</span><span>
                     {{ingredient.get("content").get("next_ingredient").get("amount")}}
                     {{ingredient.get("content").get("next_ingredient").get("unit")}}
                     {{ingredient.get("content").get("curr_ingredient").get("name")}} </span> </p>
