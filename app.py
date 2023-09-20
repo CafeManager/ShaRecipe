@@ -13,20 +13,29 @@ import os
 
 CURR_USER_KEY = "curr_user"
 
-app = Flask(__name__)
-app.config["SECRET_KEY"] = "this-is-secr3t"
+def create_app():
+    app = Flask(__name__)
+    
+    if os.environ.get("DATABASE_URL") is not None:
+        app.config["SQLALCHEMY_DATABASE_URI"] = os.environ["DATABASE_URL"]
+    else:
+        app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql:///sharecipe"
+        app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+        app.config["SQLALCHEMY_ECHO"] = True
+        app.config["DEBUG"] = True
+        app.config["SECRET_KEY"] = "this-is-secr3t"
+    connect_db(app)
 
-if os.environ.get("DATABASE_URL") is not None:
-    app.config["SQLALCHEMY_DATABASE_URI"] = os.environ["DATABASE_URL"]
-else:
-    app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql:///sharecipe"
+    return app
 
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-app.config["SQLALCHEMY_ECHO"] = True
-app.config["DEBUG"] = True
+app = create_app()
+
+
+
 API_KEY = "ebc68d98ecfa4ecba9276fcd02a7660a"
 
 connect_db(app)
+
 
 
 @app.before_request
