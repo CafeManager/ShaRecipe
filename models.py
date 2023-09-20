@@ -41,6 +41,8 @@ class User(db.Model):
         nullable=False,
     )
 
+    recipes = db.relationship('Recipe')
+
     def __repr__(self):
         return f"<User #{self.id}: {self.username}, {self.email}>"
 
@@ -74,17 +76,20 @@ class Recipe(db.Model):
 
     def __repr__(self):
         p = self
-        return f"<Recipe id={p.id} name={p.name}>"
+        return f"<Recipe id={p.id} name={p.title} summary={p.summary} created_at={p.created_at} created_by={p.created_by} api_id={p.api_id} parent_recipe_id={p.parent_recipe_id}>"
 
     __tablename__ = "recipes"
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
 
-    name = db.Column(db.Text, nullable=False)
+    title = db.Column(db.Text, nullable=False)
+
+    summary = db.Column(db.Text, nullable=False)
 
     created_at = db.Column(db.Time, nullable=False, default=datetime.now())
 
-    created_by = db.Column(db.Text, nullable=False)
+    created_by = db.Column(db.Text, db.ForeignKey(
+                        'users.username'), nullable=False)
 
     total_time = db.Column(db.Integer, nullable=False)
 
@@ -93,6 +98,10 @@ class Recipe(db.Model):
     api_id = db.Column(db.Integer, nullable=False)
 
     parent_recipe_id = db.Column(db.Integer)
+
+    image_url = db.Column(
+                    db.Text,
+                    default="/static/images/default-pic.png")
 
     ingredients = db.relationship('Ingredient')
 
@@ -121,7 +130,7 @@ class Step(db.Model):
 
     def __repr__(self):
         p = self
-        return f"<Step id={p.id} recipe={p.recipe}>"
+        return f"<Step id={p.id} recipe={p.json}>"
 
     __tablename__ = "steps"
 

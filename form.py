@@ -9,7 +9,6 @@ class UserAddForm(FlaskForm):
     username = StringField("Username", validators=[DataRequired()])
     email = StringField("E-mail", validators=[DataRequired(), Email()])
     password = PasswordField("Password", validators=[Length(min=6)])
-    image_url = StringField("(Optional) Image URL")
 
 
 class LoginForm(FlaskForm):
@@ -30,19 +29,26 @@ class ProfileForm(FlaskForm):
     password = PasswordField(validators=[DataRequired()])
 
 class IngredientEntryForm(FlaskForm):
+    def __init__(self, *args, **kwargs):
+        super(IngredientEntryForm, self).__init__(meta={'csrf':False}, *args, **kwargs)
+
     amount = FloatField("Amount")
     unit = StringField("Unit", validators=[Optional()])
     name = StringField("Name")
 
 class StepEntryForm(FlaskForm):
-    step = StringField("Step")
+    def __init__(self, *args, **kwargs):
+        super(StepEntryForm, self).__init__(meta={'csrf':False}, *args, **kwargs)
+
+    step = TextAreaField("Step")
 
 class RecipeForm(FlaskForm):
     """Profile form."""
-    name = StringField("Edit a title")
+    image_url = StringField("Edit image URL")
+    title = StringField("Edit a title")
     total_time = IntegerField("Edit recipe time")
     total_servings = IntegerField("Edit serving amount")
-    summary = StringField("Summary")
+    summary = TextAreaField("Edit summary")
     ingredients = FieldList(FormField(IngredientEntryForm), min_entries=1)
     steps = FieldList(FormField(StepEntryForm), min_entries=1)
     

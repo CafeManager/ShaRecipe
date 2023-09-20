@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block title %}
+<title> Create a recipe </title>
+{% endblock %}
+
+{% block content %}
+
+<div class="">
+
+    {% for step_list in changes.get("step_differences") %}
+    <h1> Changes from version {{loop.revindex}} </h1>
+    <h5> Step changes </h2>
+        {% if not step_list %}
+        <p> No changes made... </p>
+        {% endif %}
+        {% for step in step_list %}
+
+        {%if step.get("type") == "added"%}
+        <p class="history-text-added"> <span>Step #{{step.get("location")}}</span> <span> {{step.get("content")}}
+            </span> </p>
+        {%elif step.get("type") == "deleted" %}
+        <p class="history-text-deleted"> <span>Step #{{step.get("location")}}</span> <span> {{step.get("content")}}
+            </span> </p>
+        {%elif step.get("type") == "changed" %}
+
+        <p class="history-text-changed"> <span>Step #{{step.get("location")}}</span> <span>Before:</span><span>
+                {{step.get("content").get("next_step")}} </span> </p>
+        <p class="history-text-changed"> <span>Step #{{step.get("location")}}</span> <span>After:</span><span>
+                {{step.get("content").get("curr_step")}} </span> </p>
+        {%endif%}
+        {%endfor%}
+
+        <h5> ingredient changes </h2>
+            {% for ingredient in changes.get("ingredient_differences")[loop.index] %}
+
+
+            {%if ingredient.get("type") == "added"%}
+            <p class="history-text-added"> <span> {{ingredient.get("content").get("amount")}}
+                    {{ingredient.get("content").get("unit")}} {{ingredient.get("content").get("name")}} </span> </p>
+            {%elif ingredient.get("type") == "deleted" %}
+            <p class="history-text-deleted"> <span>Step #{{ingredient.get("location")}}</span> <span>
+                    {{ingredient.get("content")}} </span> </p>
+            {%elif ingredient.get("type") == "changed" %}
+
+            <p class="history-text-changed"> <span>Step #{{ingredient.get("location")}}</span>
+                <span>Before:</span><span> {{ingredient.get("content").get("next_ingredient").get("amount")}}
+                    {{ingredient.get("content").get("next_ingredient").get("unit")}}
+                    {{ingredient.get("content").get("next_ingredient").get("name")}} </span> </p>
+            <p class="history-text-changed"> <span>Step #{{ingredient.get("location")}}</span> <span>After:</span><span>
+                    {{ingredient.get("content").get("next_ingredient").get("amount")}}
+                    {{ingredient.get("content").get("next_ingredient").get("unit")}}
+                    {{ingredient.get("content").get("curr_ingredient").get("name")}} </span> </p>
+            {%endif%}
+
+            {%endfor%}
+            {% if not changes.get("ingredient_differences")[loop.index] %}
+            <p> No changes made... </p>
+            {% endif %}
+            {% endfor %}
+</div>
+
+
+{% endblock %}

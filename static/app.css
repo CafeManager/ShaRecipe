@@ -13,9 +13,75 @@
 }
 
 .card-text-overflow{
-
     overflow: hidden;
     text-overflow: ellipsis;
-
 }
 
+.grid {
+    display: grid;
+    grid-template-columns: .17fr .25fr;
+    row-gap: 5px;
+    margin-bottom: 5px;
+  }
+
+.max-width{
+    width: 100%;
+}
+
+.remove-button{
+    margin: 10px
+}
+
+.card-img-resize{
+    height: 55vh;
+}
+
+.btn-margin{
+    margin: 10px;
+}
+
+.right-nav-item{
+    margin-left: auto;
+    margin-right:1rem;
+    text-decoration: none;
+}
+
+.nav-item{
+    margin-right:1rem;
+    text-decoration: none;
+}
+
+.card-title-format{
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    height: 1.5rem;
+    font-size: 1rem;
+}
+
+.card-body-height{
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    height: 6rem;
+}
+
+.history-text-added{
+    background-color: #71cc51;
+}
+
+.history-text-changed{
+    background-color: #fffb05;
+}
+
+.history-text-deleted{
+    background-color: #e28180;
+}
+
+.brand-style{
+    font-size: x-large;
+    text-decoration: none;
+    color: black;
+}

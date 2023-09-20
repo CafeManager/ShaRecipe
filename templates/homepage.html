@@ -6,23 +6,28 @@
 
 {% block content %}
 
-<h1> Select a template to build your recipe off of. </h1>
-    <form class="d-flex" action="/fetchresults" id="recipe-search">
+<h1> Search for recipes online to build a template to build your recipe off of. </h1>
+    <form class="d-flex" action="/" id="recipe-search">
         <input class="form-control me-2" type="search" name="q" placeholder="Search for a recipe" aria-label="Search">
         <button class="btn btn-outline-success" type="submit">Search</button>
     </form>
-{% for recipe in res %}
-    
-    <div class="card" style="width: 30%; display:inline-block; margin:1rem">
-        <img class="card-img-top"  height="130rem" src="{{recipe.img}}" alt="Card image cap">
-        <div class="card-body">
-        <h5 class="card-title">{{recipe.title | safe}}</h5>
-        <p class="card-text">{{recipe.summary[0] | safe | truncate(200)}}</p>
-        <a href="/recipes/{{recipe.id}}/create" class="btn btn-primary">Start</a>
-        </div>
-    </div>
-
-
-{% endfor %}
+    {%if res %} 
+        {% for recipe in res %}    
+            <div class="card" style="width: 30%; display:inline-block; margin:1rem">
+                <img class="card-img-top"  height="160rem" src="
+                {%if recipe.img%} 
+                    {{ recipe.img }}
+                {% else %}
+                    ./static/frame_placeholder.jpg
+                {% endif %}
+                " alt="Card image cap">
+                <div class="card-body">
+                <h5 class="card-title card-title-format ">{{recipe.title }}</h5>
+                <p class="card-text card-content card-body-height">{{recipe.summary }}</p>
+                <a href="/recipes/{{recipe.id}}/create" class="btn btn-primary">Start</a>
+                </div>
+            </div>
+        {% endfor %}
+    {% endif %}
 
 {% endblock %}

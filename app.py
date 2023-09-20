@@ -4,8 +4,11 @@ from flask_sqlalchemy import SQLAlchemy
 from form import UserAddForm, LoginForm, RecipeForm, IngredientEntryForm, StepEntryForm
 from models import db, connect_db, User, Recipe, Step, Ingredient
 from sqlalchemy.exc import IntegrityError
+from bs4 import BeautifulSoup
 import requests
 import datetime
+from jsondiff import diff
+from bs4 import BeautifulSoup
 
 CURR_USER_KEY = "curr_user"
 
@@ -15,7 +18,7 @@ app.config["SECRET_KEY"] = "this-is-secr3t"
 app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql:///sharecipe"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SQLALCHEMY_ECHO"] = True
-app.config['DEBUG'] = True
+app.config["DEBUG"] = True
 API_KEY = "fc0a5c0a6ee744afacee96a81cf8664e"
 
 connect_db(app)
@@ -39,25 +42,34 @@ def do_logout():
         del session[CURR_USER_KEY]
 
 
-@app.route("/")
+@app.route("/", methods=["GET", "POST"])
 def home_page():
-    res = requests.get(
-        "https://api.spoonacular.com/recipes/random",
-        params={"apiKey": {API_KEY}, "tags": "dessert", "number": 5},
-    )
-    recipes = res.json().get("recipes")
-    recipeList = [
-        {
-            "id": recipe.get("id"),
-            "title": recipe.get("title"),
-            "img": recipe.get("image"),
-            "summary": [recipe.get("summary")],
-        }
-        for recipe in recipes
-    ]
-    print(recipes)
+    q = request.args.get("q")
 
-    return render_template("homepage.html", res=recipeList)
+    if q:
+        res = requests.get(
+            f"https://api.spoonacular.com/recipes/complexSearch?apiKey={API_KEY}&query={q}"
+        )
+        json = res.json()
+        idString = ",".join([str(s.get("id")) for s in json["results"]])
+        idRes = requests.get(
+            f"https://api.spoonacular.com/recipes/informationBulk?ids={idString}&apiKey={API_KEY}"
+        )
+        extraInfo = idRes.json()
+        recipeList = [
+            {
+                "id": recipe.get("id"),
+                "title": recipe.get("title"),
+                "img": recipe.get("image"),
+                "summary": BeautifulSoup(
+                    recipe.get("summary"), features="html.parser"
+                ).get_text(),
+            }
+            for recipe in extraInfo
+        ]
+        return render_template("homepage.html", res=recipeList)
+    else:
+        return render_template("homepage.html", res=[])
 
 
 @app.route("/user/register", methods=["GET", "POST"])
@@ -96,6 +108,14 @@ def login_user():
     return render_template("user/login.html", form=form)
 
 
+@app.route("/user/<int:id>", methods=["GET", "POST"])
+def show_profile(id):
+    user = User.query.get_or_404(id)
+    recipes = Recipe.query.filter(user.username == Recipe.created_by).all()
+
+    return render_template("user/profile.html", recipes=recipes)
+
+
 @app.route("/recipe/create")
 def register_user():
     form = LoginForm()
@@ -109,97 +129,338 @@ def logout():
     return redirect("/")
 
 
-@app.route("/fetchresults")
-def fetch_results():
-    q = request.args.get("q")
-    res = requests.get(
-        f"https://api.spoonacular.com/recipes/complexSearch?apiKey=fc0a5c0a6ee744afacee96a81cf8664e&query={q}"
-    )
-    json = res.json()
-    idString = ",".join([str(s.get("id")) for s in json["results"]])
-    idRes = requests.get(
-        f"https://api.spoonacular.com/recipes/informationBulk?ids={idString}&apiKey={API_KEY}"
-    )
-    extraInfo = idRes.json()
-    return render_template(
-        "search_results.html",
-        data={"recipeData": json["results"], "extraRecipeDataById": extraInfo},
-    )
-
-
-@app.route("/recipes/<int:id>/create", methods=['GET', 'POST'])
+@app.route("/recipes/<int:id>/create", methods=["GET", "POST"])
 def get_recipe_template(id):
     res = requests.get(
         f"https://api.spoonacular.com/recipes/{id}/information?apiKey={API_KEY}"
     )
     json = res.json()
-    
-
+    json["summary"] = BeautifulSoup(
+        json.get("summary"), features="html.parser"
+    ).get_text()
     ingredient_data = []
     steps_data = []
-    
 
-    for ingredient in json.get('extendedIngredients'):
+    for ingredient in json.get("extendedIngredients"):
         ingredient_form = IngredientEntryForm()
-        ingredient_data.append({'amount': ingredient.get('amount'), 'unit':ingredient.get('unit'), 'name':ingredient.get('name')})
-        ingredient_form.amount.data = ingredient.get('amount')
-        ingredient_form.unit.data = ingredient.get('unit')
-        ingredient_form.name.data = ingredient.get('name')
-        # form.ingredients.append_entry(ingredient_form)
+        ingredient_data.append(
+            {
+                "amount": ingredient.get("amount"),
+                "unit": ingredient.get("unit"),
+                "name": ingredient.get("name"),
+            }
+        )
+        ingredient_form.amount.data = ingredient.get("amount")
+        ingredient_form.unit.data = ingredient.get("unit")
 
-    for step in json.get('analyzedInstructions')[0].get('steps'):
+    for step in json.get("analyzedInstructions")[0].get("steps"):
         step_form = StepEntryForm()
-        steps_data.append({'step': step.get('step')})
-    form = RecipeForm(name=json.get('name'), total_time=json.get('readyInMinutes'), 
-                      total_servings=json.get('total_servings'), summary=json.get('summary'), 
-                      steps=steps_data, ingredients=ingredient_data)
+        steps_data.append({"step": step.get("step")})
+
+    stripped_summary = BeautifulSoup(
+        json.get("summary"), features="html.parser"
+    ).get_text()
+    form = RecipeForm(
+        title=json.get("title"),
+        image_url=json.get("image"),
+        total_time=json.get("readyInMinutes"),
+        total_servings=json.get("servings"),
+        summary=stripped_summary,
+        steps=steps_data,
+        ingredients=ingredient_data,
+    )
 
     if form.validate_on_submit():
-        name = form.name.data
-        user_id = g.user.id
+        title = form.title.data
+        summary = form.summary.data
+        image_url = form.image_url.data
         created_at = datetime.datetime.now()
-        created_by = g.user.id
+        created_by = g.user.username
         total_time = form.total_time.data
         parent_recipe_id = 0
         total_servings = form.total_servings.data
         api_id = id
 
-        ingredient_json = {'ingredients':[]}
-        step_json = {'steps':[]}
-        
+        ingredient_json = {"ingredients": []}
+        step_json = {"steps": []}
 
         for ingredient in form.ingredients:
-            ingredient_json['ingredients'].append({
-                'amount':ingredient.data['amount'],
-                'unit':ingredient.data['unit'],
-                'name':ingredient.data['name']
-            })
+            ingredient_json["ingredients"].append(
+                {
+                    "amount": ingredient.data["amount"],
+                    "unit": ingredient.data["unit"],
+                    "name": ingredient.data["name"],
+                }
+            )
 
         for step in form.steps:
-            step_json['steps'].append({
-                'step': step.step.data
-            })
+            step_json["steps"].append({"step": step.step.data})
 
+        recipe = Recipe(
+            title=title,
+            summary=summary,
+            image_url=image_url,
+            created_at=created_at,
+            created_by=created_by,
+            total_time=total_time,
+            total_servings=total_servings,
+            api_id=api_id,
+            parent_recipe_id=parent_recipe_id,
+        )
 
-
-        recipe = Recipe(name=name, 
-                        created_at=created_at, created_by=created_by, 
-                        total_time=total_time, total_servings=total_servings, 
-                        api_id=api_id, parent_recipe_id=parent_recipe_id)
-        
         ingredient_list = Ingredient(json=ingredient_json, recipe_id=recipe.id)
-        
+
         step_list = Step(json=step_json, recipe_id=recipe.id)
 
         recipe.ingredients.append(ingredient_list)
         recipe.steps.append(step_list)
         db.session.add(recipe)
         db.session.commit()
+
+        return redirect(f"/user/{g.user.id}")
     else:
         print(form.errors)
-        
-        
-        
+
     return render_template("/recipe/create.html", res=json, form=form)
 
-    
+
+@app.route("/recipes/<int:id>")
+def show_recipe_template(id):
+    recipe = Recipe.query.get_or_404(id)
+
+    return render_template("/recipe/show.html", recipe=recipe)
+
+
+def get_ingredient_differences(ingredient_list_1, ingredient_list_2):
+    curr_recipe_len = len(ingredient_list_1)
+    next_recipe_len = len(ingredient_list_2)
+    ingredient_diff = []
+    (higher_rec, highest_recipe_len) = (
+        ("curr", curr_recipe_len)
+        if curr_recipe_len >= next_recipe_len
+        else ("next", next_recipe_len)
+    )
+    for i in range(highest_recipe_len):
+        if higher_rec == "curr":
+            curr_ingredient = ingredient_list_1[i]
+
+            if i < next_recipe_len:
+                next_ingredient = ingredient_list_2[i]
+                if curr_ingredient == next_ingredient:
+                    continue
+                else:
+                    ingredient_diff.append(
+                        {
+                            "location": i,
+                            "type": "changed",
+                            "content": {
+                                "next_ingredient": next_ingredient,
+                                "curr_ingredient": curr_ingredient,
+                            },
+                        }
+                    )
+            else:
+                ingredient_diff.append(
+                    {"location": i, "type": "added", "content": curr_ingredient}
+                )
+        elif higher_rec == "next":
+            next_ingredient = ingredient_list_2[i]
+            if i < curr_recipe_len:
+                curr_ingredient = ingredient_list_1[i]
+                if curr_ingredient == next_ingredient:
+                    continue
+                else:
+                    ingredient_diff.append(
+                        {
+                            "location": i,
+                            "type": "changed",
+                            "content": {
+                                "next_ingredient": next_ingredient,
+                                "curr_ingredient": curr_ingredient,
+                            },
+                        }
+                    )
+            else:
+                ingredient_diff.append(
+                    {"location": i, "type": "deleted", "content": next_ingredient}
+                )
+    return ingredient_diff
+
+
+@app.route("/recipes/<int:id>/history")
+def show_recipe_history(id):
+    root_recipe = Recipe.query.get_or_404(id)
+    curr_recipe = root_recipe
+
+    recipeList = []
+    change_list = []
+    ingredient_change_list = []
+    changes = []
+    change_count = 0
+    recipeList.append(root_recipe)
+    while curr_recipe.parent_recipe_id != 0:
+        change_count += 1
+        next_recipe = Recipe.query.get(curr_recipe.parent_recipe_id)
+        curr_recipe_len = len(curr_recipe.steps[0].json.get("steps"))
+        next_recipe_len = len(next_recipe.steps[0].json.get("steps"))
+        ingredientDiff = diff(
+            next_recipe.ingredients[0].json,
+            curr_recipe.ingredients[0].json,
+            syntax="explicit",
+        )
+        step_diff = []
+        (higher_rec, highest_recipe_len) = (
+            ("curr", curr_recipe_len)
+            if curr_recipe_len >= next_recipe_len
+            else ("next", next_recipe_len)
+        )
+        for i in range(highest_recipe_len):
+            if higher_rec == "curr":
+                curr_step = curr_recipe.steps[0].json.get("steps")[i]["step"]
+
+                if i < next_recipe_len:
+                    next_step = next_recipe.steps[0].json.get("steps")[i]["step"]
+                    if curr_step == next_step:
+                        continue
+                    else:
+                        step_diff.append(
+                            {
+                                "location": i,
+                                "type": "changed",
+                                "content": {
+                                    "next_step": next_step,
+                                    "curr_step": curr_step,
+                                },
+                            }
+                        )
+                else:
+                    step_diff.append(
+                        {"location": i, "type": "added", "content": curr_step}
+                    )
+            elif higher_rec == "next":
+                next_step = next_recipe.steps[0].json.get("steps")[i]["step"]
+                if i < curr_recipe_len:
+                    curr_step = curr_recipe.steps[0].json.get("steps")[i]["step"]
+                    if curr_step == next_step:
+                        continue
+                    else:
+                        step_diff.append(
+                            {
+                                "location": i,
+                                "type": "changed",
+                                "content": {
+                                    "next_step": next_step,
+                                    "curr_step": curr_step,
+                                },
+                            }
+                        )
+                else:
+                    step_diff.append(
+                        {"location": i, "type": "deleted", "content": next_step}
+                    )
+        change_list.append(step_diff)
+        curr_recipe = next_recipe
+        curr_recipe = next_recipe
+        next_recipe = Recipe.query.get(curr_recipe.parent_recipe_id)
+
+    curr_recipe_2 = root_recipe
+    while curr_recipe_2.parent_recipe_id != 0:
+        next_recipe2 = Recipe.query.get(curr_recipe_2.parent_recipe_id)
+
+        ingredient_differences = get_ingredient_differences(
+            curr_recipe_2.ingredients[0].json.get("ingredients"),
+            next_recipe2.ingredients[0].json.get("ingredients"),
+        )
+        ingredient_change_list.append(ingredient_differences)
+        curr_recipe_2 = next_recipe2
+    changes = {
+        "step_differences": change_list,
+        "ingredient_differences": ingredient_change_list,
+    }
+
+    print(changes)
+    return render_template("/recipe/history.html", changes=changes)
+
+
+@app.route("/recipes/<int:id>/update", methods=["GET", "POST"])
+def update_recipe_template(id):
+    recipe = Recipe.query.get_or_404(id)
+
+    ingredient_data = []
+    steps_data = []
+
+    for ingredient in recipe.ingredients[0].json.get("ingredients"):
+        ingredient_data.append(
+            {
+                "amount": ingredient.get("amount"),
+                "unit": ingredient.get("unit"),
+                "name": ingredient.get("name"),
+            }
+        )
+
+    for step in recipe.steps[0].json.get("steps"):
+
+        steps_data.append({"step": step.get("step")})
+
+    form = RecipeForm(
+        title=recipe.title,
+        image_url=recipe.image_url,
+        total_time=recipe.total_time,
+        total_servings=recipe.total_servings,
+        summary=recipe.summary,
+        steps=steps_data,
+        ingredients=ingredient_data,
+    )
+
+    if form.validate_on_submit():
+        title = form.title.data
+        summary = form.summary.data
+        image_url = form.image_url.data
+        created_at = datetime.datetime.now()
+        created_by = g.user.username
+        total_time = form.total_time.data
+        parent_recipe_id = id
+        total_servings = form.total_servings.data
+        api_id = id
+
+        ingredient_json = {"ingredients": []}
+        step_json = {"steps": []}
+
+        for ingredient in form.ingredients:
+            ingredient_json["ingredients"].append(
+                {
+                    "amount": ingredient.data["amount"],
+                    "unit": ingredient.data["unit"],
+                    "name": ingredient.data["name"],
+                }
+            )
+
+        for step in form.steps:
+            step_json["steps"].append({"step": step.step.data})
+
+        recipe = Recipe(
+            title=title,
+            summary=summary,
+            image_url=image_url,
+            created_at=created_at,
+            created_by=created_by,
+            total_time=total_time,
+            total_servings=total_servings,
+            api_id=api_id,
+            parent_recipe_id=parent_recipe_id,
+        )
+
+        ingredient_list = Ingredient(json=ingredient_json, recipe_id=recipe.id)
+
+        step_list = Step(json=step_json, recipe_id=recipe.id)
+
+        recipe.ingredients.append(ingredient_list)
+        recipe.steps.append(step_list)
+        db.session.add(recipe)
+        db.session.commit()
+
+        return redirect(f"/user/{g.user.id}")
+    else:
+        print(form.errors)
+
+    return render_template("/recipe/update.html", recipe=recipe, form=form)

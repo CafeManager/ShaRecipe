@@ -6,53 +6,48 @@
 
 {% block content %}
 
-<h1> Customize your recipe </h1>
+<div class="d-flex">
+    <div>
+        <h1 class="mx-auto text-center"> Customize your recipe </h1>
 
-<form id="pet-add-form" method="POST">
-    {{ form.hidden_tag() }}
+        <div class="card mx-auto" style="margin:1rem">
+            <img class="card-img-top card-img-resize" src="{{recipe.image_url}}" alt="Card image cap">
+            <div class="card-body">
+                <h5 class="card-title">{{recipe.image}}</h5>
+                <h5 class="card-title">{{recipe.title | safe}}</h5>
+                <h5 class="card-title">{{recipe.total_time | safe}} minutes</h5>
+                <h5 class="card-title">{{recipe.total_servings | safe}} servings </h5>
+                <p class="card-text">{{recipe.summary}}</p>
 
-
-        {{form.name()}}
-
-    <div class="card" style="width: 70%; display:inline-block; margin:1rem">
-        <img class="card-img-top" height="130rem" src="{{res.image}}" alt="Card image cap">
-        <div class="card-body">
-
-            <h5 class="card-title">{{res.title | safe}}</h5>
-            
-            <input type="text" placeholder="Edit a title">
-            <h5 class="card-title">{{res.readyInMinutes | safe}} minutes</h5>
-            <input type="text" placeholder="Edit recipe time">
-            <h5 class="card-title">{{res.servings | safe}} servings </h5>
-            <input type="text" placeholder="Edit serving amount">
-            <p class="card-text">{{res.summary | safe}}</p>
-            <input type="text" placeholder="Edit summary">
+            </div>
         </div>
+
+        <div id="ingredients">
+            {% for ingredient in recipe.ingredients[0].json.get('ingredients')%}
+            <div id="ingredient-{{loop.index - 1}}">
+                <div class="grid mx-auto">
+                    {{ingredient.amount}}
+                    {{ingredient.unit}}
+                    {{ingredient.name}}
+                </div>
+            </div>
+            {% endfor%}
+        </div>
+
+        <div id="steps">
+            {% for step in recipe.steps[0].json.get('steps')%}
+
+            <span>Step :</span>
+            <br>
+            <p class="w-100 mt-2"> {{step.get('step')}} </p>
+            {% endfor%}
+        </div>
+
+        <a href="/recipes/{{recipe.id}}/history" class="btn btn-primary btn-margin"> Show history </a>
+        <a href="/recipes/{{recipe.id}}/update" class="btn btn-primary">Update</a>
+
     </div>
-
-
-
-    <ul>
-        {%for ingredient in res.extendedIngredients %}
-        <li> {{ ingredient.amount }} {{ ingredient.unit }} {{ ingredient.name }} </li>
-        
-        <span> Amount </span> <input type="text" placeholder="{{ingredient.amount}}">
-        <span> Unit </span> <input type="text" placeholder="{{ingredient.unit}}">
-        <span> Name </span> <input type="text" placeholder="{{ingredient.name}}">
-        {%endfor%}
-
-        {% for field in form.ingredients %}
-                
-        {% endfor %}
-    </ul>
-
-    {% for step in res.analyzedInstructions[0].steps%}
-    <p> {{step.step}} </p>
-    <input type="text" placeholder="Add new step">
-    {% endfor %}
-    <br>
-    <button class="btn btn-primary"> Success</button>
-</form>
+</div>
 
 
 {% endblock %}

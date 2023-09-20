@@ -10,24 +10,22 @@
     <form id="recipe-add-form" method="POST">
         {{ form.hidden_tag() }}
         <h1 class="mx-auto text-center"> Customize your recipe </h1>
-
         <div class="card mx-auto" style="margin:1rem">
-            <img class="card-img-top card-img-resize" src="{{res.image}}" alt="Card image cap">
+            <img class="card-img-top card-img-resize" src="{{recipe.image_url}}" alt="Card image cap">
             <div class="card-body">
+
                 <div class="grid mx-auto">
                     {{form.image_url.label}} {{form.image_url}}
                     {{form.title.label}} {{form.title}}
                     {{form.total_time.label}} {{form.total_time}}
                     {{form.total_servings.label}} {{form.total_servings}}
                 </div>
-                <p class="card-text">{{res.summary | safe}}</p>
+
+                <p class="card-text">{{recipe.summary}}</p>
                 {{form.summary.label}} {{form.summary(class_="w-100", rows=3)}}
 
             </div>
         </div>
-
-
-
 
         <div id="ingredients">
             {% for ingredient in form.ingredients%}
@@ -45,7 +43,6 @@
         <button id="add-ingredient" class="btn btn-primary btn-margin"> Add ingredient </button>
 
         <div id="steps">
-
             {% for step in form.steps%}
             <div>
                 {{step.form.step.label}} <span>:</span>
@@ -55,7 +52,6 @@
                 <br>
             </div>
             {% endfor%}
-
         </div>
         <button id="add-step" class="btn btn-primary btn-margin"> Add step </button>
         <button class="btn btn-primary btn-margin"> Create recipe </button>
