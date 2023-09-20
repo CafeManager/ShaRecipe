@@ -9,13 +9,18 @@ import requests
 import datetime
 from jsondiff import diff
 from bs4 import BeautifulSoup
+import os
 
 CURR_USER_KEY = "curr_user"
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "this-is-secr3t"
 
-app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql:///sharecipe"
+if os.environ["DATABASE_URL"]:
+    app.config["SQLALCHEMY_DATABASE_URI"] = os.environ["DATABASE_URL"]
+else:
+    app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql:///sharecipe"
+
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SQLALCHEMY_ECHO"] = True
 app.config["DEBUG"] = True
