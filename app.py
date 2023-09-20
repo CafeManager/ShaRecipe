@@ -24,7 +24,7 @@ else:
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SQLALCHEMY_ECHO"] = True
 app.config["DEBUG"] = True
-API_KEY = "fc0a5c0a6ee744afacee96a81cf8664e"
+API_KEY = "ebc68d98ecfa4ecba9276fcd02a7660a"
 
 connect_db(app)
 

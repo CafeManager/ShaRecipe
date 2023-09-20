@@ -9,16 +9,17 @@
     {% for recipe in recipes | reverse %}
         
         <div class="card" style="width: 30%; display:inline-block; margin:1rem">
-            <img class="card-img-top"  height="130rem" src="{{recipe.image_url}}" alt="Card image cap">
+            <img class="card-img-top"  height="160rem" src="{{recipe.image_url}}" alt="Card image cap">
             <div class="card-body">
-            <h5 class="card-title">{{recipe.title | safe}}</h5>
-            <p class="card-text">{{recipe.summary | safe | truncate(200)}}</p>
+            <h5 class="card-title card-title-format">{{recipe.title | safe}}</h5>
+            <p class="card-text card-content card-body-height">{{recipe.summary}}</p>
             <a href="/recipes/{{recipe.id}}/update" class="btn btn-primary">Update</a>
             <a href="/recipes/{{recipe.id}}" class="btn btn-primary">Show</a>
             </div>
         </div>
 
     {% endfor %}
+
 
     {% if not recipes %}
         <h1> No recipes made... yet. </h1>

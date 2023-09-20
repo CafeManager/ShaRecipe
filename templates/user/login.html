@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %} Login {% endblock%}
+{% block title %} <title> Login </title>{% endblock%}
 
 {% block content %}
 
@@ -14,10 +14,10 @@
       {% for error in field.errors %}
       <span class="text-danger">{{ error }}</span>
       {% endfor %}
-      {{ field(placeholder=field.label.text, class="form-control") }}
+      {{ field(placeholder=field.label.text, class="form-control mt-2") }}
       {% endfor %}
 
-      <button class="btn btn-primary btn-block btn-lg">Log in</button>
+      <button class="btn btn-primary btn-block btn-lg mt-2">Log in</button>
     </form>
   </div>
 </div>
