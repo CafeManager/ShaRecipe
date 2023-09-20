@@ -16,7 +16,7 @@ CURR_USER_KEY = "curr_user"
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "this-is-secr3t"
 
-if os.environ["DATABASE_URL"]:
+if os.environ.get("DATABASE_URL") is not None:
     app.config["SQLALCHEMY_DATABASE_URI"] = os.environ["DATABASE_URL"]
 else:
     app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql:///sharecipe"
