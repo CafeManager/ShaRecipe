@@ -17,13 +17,14 @@ def create_app():
     app = Flask(__name__)
     print(os.environ)
     if os.getenv("DATABASE_URL", default=None) is not None:
+        
+        print( os.getenv("DATABASE_URL"))
         app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
     else:
         app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql:///sharecipe"
-        app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-        app.config["SQLALCHEMY_ECHO"] = True
-        app.config["DEBUG"] = True
-        app.config["SECRET_KEY"] = "this-is-secr3t"
+    app.config["SQLALCHEMY_ECHO"] = True
+    app.config["DEBUG"] = True
+    app.config["SECRET_KEY"] = "this-is-secr3t"
     connect_db(app)
 
     return app
