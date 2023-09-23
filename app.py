@@ -13,11 +13,13 @@ import os
 
 CURR_USER_KEY = "curr_user"
 
+# initiate the application
 def create_app():
     app = Flask(__name__)
-    print(os.environ)
+    
+    # check for a database url connection string
+    # use sharecipe by default
     if os.getenv("DATABASE_URL", default=None) is not None:
-        
         print( os.getenv("DATABASE_URL"))
         app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
     else:
@@ -26,32 +28,28 @@ def create_app():
     app.config["DEBUG"] = True
     app.config["SECRET_KEY"] = "this-is-secr3t"
     connect_db(app)
-
     return app
 
+# start the app
 app = create_app()
-
-
 
 API_KEY = "ebc68d98ecfa4ecba9276fcd02a7660a"
 
 connect_db(app)
 
-
-
+# before a request is processed, create a global variable that is the user's data
 @app.before_request
 def add_user_to_g():
     if CURR_USER_KEY in session:
         g.user = User.query.get(session[CURR_USER_KEY])
-
     else:
         g.user = None
 
-
+# give the client a user id to remember
 def do_login(user):
     session[CURR_USER_KEY] = user.id
 
-
+# clear the session data so the user data not accessible anymore
 def do_logout():
     if CURR_USER_KEY in session:
         del session[CURR_USER_KEY]
@@ -60,8 +58,9 @@ def do_logout():
 @app.route("/", methods=["GET", "POST"])
 def home_page():
     q = request.args.get("q")
-
+    # check if there is something currently being searched
     if q:
+        #send a request based on the search parameter
         res = requests.get(
             f"https://api.spoonacular.com/recipes/complexSearch?apiKey={API_KEY}&query={q}"
         )
@@ -82,11 +81,14 @@ def home_page():
             }
             for recipe in extraInfo
         ]
+        # render the homepage with search results
         return render_template("homepage.html", res=recipeList)
     else:
+        # render the homepage with no recipes
         return render_template("homepage.html", res=[])
 
 
+# user signup
 @app.route("/user/register", methods=["GET", "POST"])
 def create_user():
     form = UserAddForm()
@@ -109,13 +111,12 @@ def create_user():
 
     return render_template("user/register.html", form=form)
 
-
+# user login
 @app.route("/user/login", methods=["GET", "POST"])
 def login_user():
     form = LoginForm()
     if form.validate_on_submit():
         user = User.authenticate(form.username.data, form.password.data)
-
         if user:
             session[CURR_USER_KEY] = user.id
             return redirect("/")
@@ -123,6 +124,7 @@ def login_user():
     return render_template("user/login.html", form=form)
 
 
+# show a user's profile
 @app.route("/user/<int:id>", methods=["GET", "POST"])
 def show_profile(id):
     user = User.query.get_or_404(id)
@@ -130,26 +132,28 @@ def show_profile(id):
 
     return render_template("user/profile.html", recipes=recipes)
 
-
 @app.route("/recipe/create")
 def register_user():
     form = LoginForm()
     return render_template("recipe/create.html", form=form)
 
-
+# remove user data from session then send to homepage
 @app.route("/logout")
 def logout():
     if CURR_USER_KEY in session:
         del session[CURR_USER_KEY]
     return redirect("/")
 
-
+# go to recipe creation page
 @app.route("/recipes/<int:id>/create", methods=["GET", "POST"])
 def get_recipe_template(id):
+    # start with a recipe based on a recipe from spoonacular API
     res = requests.get(
         f"https://api.spoonacular.com/recipes/{id}/information?apiKey={API_KEY}"
     )
     json = res.json()
+
+    # strip html tags
     json["summary"] = BeautifulSoup(
         json.get("summary"), features="html.parser"
     ).get_text()
@@ -239,13 +243,14 @@ def get_recipe_template(id):
     return render_template("/recipe/create.html", res=json, form=form)
 
 
+# show a recipe within the database
 @app.route("/recipes/<int:id>")
 def show_recipe_template(id):
     recipe = Recipe.query.get_or_404(id)
 
     return render_template("/recipe/show.html", recipe=recipe)
 
-
+# say the differences between 2 recipe lists
 def get_ingredient_differences(ingredient_list_1, ingredient_list_2):
     curr_recipe_len = len(ingredient_list_1)
     next_recipe_len = len(ingredient_list_2)
@@ -301,7 +306,7 @@ def get_ingredient_differences(ingredient_list_1, ingredient_list_2):
                 )
     return ingredient_diff
 
-
+# show recipe history page
 @app.route("/recipes/<int:id>/history")
 def show_recipe_history(id):
     root_recipe = Recipe.query.get_or_404(id)
@@ -393,10 +398,9 @@ def show_recipe_history(id):
         "ingredient_differences": ingredient_change_list,
     }
 
-    print(changes)
     return render_template("/recipe/history.html", changes=changes)
 
-
+# update a recipe
 @app.route("/recipes/<int:id>/update", methods=["GET", "POST"])
 def update_recipe_template(id):
     recipe = Recipe.query.get_or_404(id)
